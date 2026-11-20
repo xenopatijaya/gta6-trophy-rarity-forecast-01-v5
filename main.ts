@@ -332,7 +332,11 @@ function richForecast(c, states, rates) {
   const lnNPow = aPow + bPow * Math.log(1 + Math.max(xPred, -0.999));
   const wPow = spanH + aheadH > 0 ? aheadH / (aheadH + spanH) : 0;
   const lnN = (1 - wPow) * lnNLogLin + wPow * lnNPow;
-  const nPred = clampTo(Math.round(Math.exp(lnN)), nLast, 5000000);
+  // A non-finite fit (e.g. a malformed read) must not poison the forecast:
+  // fall back to holding the tracked count where it stands.
+  const nPred = Number.isFinite(lnN)
+    ? clampTo(Math.round(Math.exp(lnN)), nLast, 5000000)
+    : nLast;
   const dN = nPred - nLast;
 
   // --- Intervals between consecutive states. ---
